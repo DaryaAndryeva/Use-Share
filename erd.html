@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Схема БД — Use & Share</title>
+<meta name="description" content="ER-диаграмма базы данных Use & Share: 7 таблиц, связи, статусы сделки и правила целостности">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f4f6f9; --card: #ffffff; --ink: #14243f; --ink-2: #4a5a72; --ink-3: #7a879a;
+  --rule: #dfe5ee; --rule-2: #eef2f7;
+  --navy: #1e3a66; --green: #1f8a70; --sand: #b98234; --red: #b4423a;
+  --g-people: #1e3a66; --g-catalog: #1f8a70; --g-deal: #b98234; --g-money: #2f7d9a; --g-control: #6b5b95;
+  --line: #9aa7b8; --line-user: #8fa3c4;
+  --mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  --sans: 'Montserrat', system-ui, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1724; --card: #172235; --ink: #e8edf5; --ink-2: #b2bdcd; --ink-3: #8592a6;
+    --rule: #2a3850; --rule-2: #1f2b40;
+    --g-people: #7aa2e3; --g-catalog: #3fbf9b; --g-deal: #e0a85a; --g-money: #63b6d4; --g-control: #a996d6;
+    --line: #5d6b82; --line-user: #6f86ad; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1724; --card: #172235; --ink: #e8edf5; --ink-2: #b2bdcd; --ink-3: #8592a6;
+  --rule: #2a3850; --rule-2: #1f2b40;
+  --g-people: #7aa2e3; --g-catalog: #3fbf9b; --g-deal: #e0a85a; --g-money: #63b6d4; --g-control: #a996d6;
+  --line: #5d6b82; --line-user: #6f86ad; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 500 14px/1.45 var(--sans); }
+a { color: var(--g-catalog); }
+.wrap { max-width: 1440px; margin: 0 auto; padding: 32px 32px 64px; }
+header.top { display: flex; align-items: flex-end; gap: 24px; flex-wrap: wrap; margin-bottom: 20px; }
+.top h1 { margin: 0; font-size: 30px; line-height: 1.15; font-weight: 800; letter-spacing: -.01em; }
+.top p { margin: 6px 0 0; color: var(--ink-2); max-width: 720px; }
+.top .back { display: inline-flex; gap: 6px; align-items: center; font-weight: 600; font-size: 13px; text-decoration: none; margin-bottom: 10px; }
+.controls { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+.seg { display: inline-flex; background: var(--card); border: 1px solid var(--rule); border-radius: 10px; padding: 3px; }
+.seg button { border: 0; background: none; font: 600 13px var(--sans); color: var(--ink-2); padding: 7px 12px; border-radius: 7px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--navy); color: #fff; }
+:root[data-theme="dark"] .seg button[aria-pressed="true"] { background: #2d4f86; }
+.btn { border: 1px solid var(--rule); background: var(--card); color: var(--ink); font: 600 13px var(--sans); padding: 9px 12px; border-radius: 10px; cursor: pointer; }
+.btn:hover { border-color: var(--ink-3); }
+
+.legend { display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: center; padding: 12px 16px; background: var(--card); border: 1px solid var(--rule); border-radius: 12px; margin-bottom: 16px; font-size: 13px; color: var(--ink-2); }
+.legend b { color: var(--ink); font-weight: 700; }
+.legend .item { display: inline-flex; gap: 8px; align-items: center; }
+.dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.key { font: 600 10px/1 var(--mono); padding: 3px 5px; border-radius: 4px; letter-spacing: .02em; }
+.key.pk { background: #f6e7c8; color: #7a5212; }
+.key.fk { background: #dbe7f7; color: #1e3a66; }
+.key.uk { background: #e3f1ec; color: #17664f; }
+:root[data-theme="dark"] .key.pk { background: #4a3a1c; color: #f2cf8f; }
+:root[data-theme="dark"] .key.fk { background: #233b61; color: #b9d0f3; }
+:root[data-theme="dark"] .key.uk { background: #1d4237; color: #9fe0c9; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .key.pk { background: #4a3a1c; color: #f2cf8f; }
+  :root:not([data-theme="light"]) .key.fk { background: #233b61; color: #b9d0f3; }
+  :root:not([data-theme="light"]) .key.uk { background: #1d4237; color: #9fe0c9; }
+  :root:not([data-theme="light"]) .seg button[aria-pressed="true"] { background: #2d4f86; }
+}
+
+.board { position: relative; background: var(--card); border: 1px solid var(--rule); border-radius: 16px; overflow-x: auto; }
+.canvas { position: relative; width: 1776px; margin: 0 auto; transform-origin: 0 0; }
+.board.fit { overflow: hidden; }
+.board.fit .canvas { margin: 0; }
+.zoom { display: none; }
+.board.can-fit + .zoombar .zoom { display: inline-flex; }
+.zoombar { display: flex; justify-content: flex-end; margin: 8px 0 0; }
+svg.links { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
+.t { position: absolute; width: 320px; background: var(--card); border: 1px solid var(--rule); border-radius: 12px; box-shadow: 0 1px 2px rgba(20,36,63,.06), 0 6px 18px rgba(20,36,63,.06); transition: opacity .15s, box-shadow .15s; }
+.t::before { content: ""; position: absolute; left: -1px; right: -1px; top: -1px; height: 5px; border-radius: 12px 12px 0 0; background: var(--g); }
+.t-head { padding: 14px 14px 10px; border-bottom: 1px solid var(--rule); }
+.t-title h2 { margin: 0; font-size: 16px; line-height: 1.25; font-weight: 800; }
+.t-sub { display: flex; gap: 8px; align-items: baseline; margin-top: 2px; }
+.t-sub code { font: 500 12px var(--mono); color: var(--ink-3); }
+.t-sub .fr { margin-left: auto; font: 600 10.5px var(--mono); color: var(--g); white-space: nowrap; }
+.t-desc { margin: 3px 0 0; font-size: 12px; line-height: 1.4; color: var(--ink-2); }
+.rows { list-style: none; margin: 0; padding: 4px 0 6px; }
+.r { display: grid; grid-template-columns: 40px 1fr auto; align-items: center; gap: 6px; height: 24px; padding: 0 12px 0 10px; font-size: 12px; }
+.r:nth-child(even) { background: var(--rule-2); }
+.r .name { font: 500 12px var(--mono); color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.r .name i { font-style: normal; font-family: var(--sans); font-weight: 500; color: var(--ink-3); margin-left: 6px; font-size: 11.5px; }
+.r .type { font: 400 11px var(--mono); color: var(--ink-3); white-space: nowrap; }
+.r.key-row .name { font-weight: 600; }
+.t-main { border-color: var(--g-people); box-shadow: 0 0 0 1px var(--g-people), 0 10px 28px rgba(20,36,63,.12); }
+.t-main .t-title h2 { font-size: 18px; }
+.board.focus .r.on { background: color-mix(in srgb, var(--g-catalog) 18%, transparent); }
+.lbl { font-size: 11.5px; }
+.r .ref { font: 600 10.5px var(--mono); color: var(--line-user); }
+.hidden-rows { display: none; }
+body.keys-only .r.plain { display: none; }
+body.keys-only .hidden-rows { display: block; padding: 2px 12px 8px 46px; font-size: 11.5px; color: var(--ink-3); }
+.board.focus .t { opacity: .35; }
+.board.focus .t.on { opacity: 1; box-shadow: 0 0 0 2px var(--g), 0 8px 24px rgba(20,36,63,.12); }
+.lnk { fill: none; stroke: var(--line); stroke-width: 1.6; transition: opacity .15s, stroke .15s; }
+.lnk.user { stroke: var(--line-user); stroke-dasharray: 5 4; }
+.board.focus .lnk { opacity: .12; }
+.board.focus .lnk.on { opacity: 1; stroke: var(--ink); stroke-width: 2; stroke-dasharray: none; }
+.lbl { font: 600 10.5px var(--sans); fill: var(--ink-2); paint-order: stroke; stroke: var(--card); stroke-width: 4px; stroke-linejoin: round; transition: opacity .15s; }
+.board.focus .lbl { opacity: .15; }
+.board.focus .lbl.on { opacity: 1; fill: var(--ink); }
+.mk { fill: none; stroke: var(--line); stroke-width: 1.6; }
+.hint { margin: 10px 2px 0; font-size: 12.5px; color: var(--ink-3); }
+
+section.more { display: grid; align-items: start; grid-template-columns: 1.35fr 1fr; gap: 16px; margin-top: 16px; }
+.panel { background: var(--card); border: 1px solid var(--rule); border-radius: 16px; padding: 20px 22px; }
+.panel h3 { margin: 0 0 4px; font-size: 18px; font-weight: 800; }
+.panel > p { margin: 0 0 16px; color: var(--ink-2); font-size: 13px; }
+.flow { display: flex; align-items: center; gap: 0; flex-wrap: wrap; row-gap: 12px; }
+.st { border: 1.5px solid var(--g-deal); border-radius: 10px; padding: 8px 10px; min-width: 112px; }
+.st b { display: block; font-size: 13px; }
+.st code { font: 500 11px var(--mono); color: var(--ink-3); }
+.st.lock { background: color-mix(in srgb, var(--g-deal) 14%, transparent); }
+.st.end { border-color: var(--g-catalog); }
+.st.bad { border-color: var(--ink-3); border-style: dashed; }
+.arr { width: 26px; height: 2px; background: var(--line); position: relative; flex: none; }
+.arr::after { content: ""; position: absolute; right: -1px; top: -4px; border: 5px solid transparent; border-left: 7px solid var(--line); border-right: 0; }
+.branch { margin-top: 14px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-size: 12.5px; color: var(--ink-2); }
+.note { margin-top: 14px; font-size: 12.5px; color: var(--ink-2); display: flex; gap: 8px; align-items: center; }
+.sw { width: 14px; height: 14px; border-radius: 4px; border: 1.5px solid var(--g-deal); background: color-mix(in srgb, var(--g-deal) 14%, transparent); flex: none; }
+.para { margin: 14px 0 0; font-size: 12.5px; color: var(--ink-2); }
+.para code, .note code, .panel > p code, .hint code { font: 500 11.5px var(--mono); }
+.changes { margin-top: 16px; }
+.changes ul { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 8px; font-size: 13px; color: var(--ink-2); }
+.changes b { color: var(--ink); }
+.changes p { margin: 12px 0 0; font-size: 12.5px; color: var(--ink-3); }
+.top p b { color: var(--ink); font-weight: 700; }
+.top p code { font: 500 12.5px var(--mono); }
+.more.one { grid-template-columns: 1fr; }
+.stories { margin-top: 40px; }
+.stories > h2 { font-size: 28px; font-weight: 800; letter-spacing: -.02em; }
+.stories-lead { color: var(--ink-2); margin: 8px 0 20px; max-width: 70ch; }
+.us-list { display: grid; gap: 12px; }
+.us { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 0; background: var(--card); border: 1px solid var(--rule); border-radius: 14px; overflow: hidden; }
+.us.on { border-color: var(--ink); box-shadow: 0 0 0 2px var(--ink); }
+.us-l { padding: 18px 20px; display: grid; gap: 8px; align-content: start; border-right: 1px solid var(--rule); }
+.us-id { display: flex; align-items: center; gap: 8px; font: 600 12px var(--mono); color: var(--ink-3); }
+.us-id span { padding: 2px 8px; border-radius: 10px; background: var(--rule-2); color: var(--ink-2); font-family: var(--sans); font-weight: 700; }
+.us-l h3 { margin: 0; font-size: 17px; line-height: 1.3; }
+.us-l p { margin: 0; font-size: 14px; color: var(--ink-2); }
+.us-l button { justify-self: start; margin-top: 4px; }
+.us-r { padding: 18px 20px; display: grid; gap: 10px; align-content: start; }
+.us-t { display: flex; flex-wrap: wrap; gap: 6px; }
+.us-t span { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 13px; font: 600 12px var(--mono); background: color-mix(in srgb, var(--g) 12%, transparent); color: var(--ink); }
+.us-t span::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--g); }
+.us-r ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 14px; color: var(--ink-2); }
+.us-r code { font: 500 12px var(--mono); color: var(--ink); background: var(--rule-2); padding: 1px 5px; border-radius: 4px; }
+.us-out { margin-top: 14px; font-size: 13px; color: var(--ink-3); }
+@media (max-width: 860px) { .us { grid-template-columns: 1fr; } .us-l { border-right: 0; border-bottom: 1px solid var(--rule); } }
+.rules { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.rules li { display: grid; grid-template-columns: 116px 1fr; gap: 10px; font-size: 13px; }
+.rules code { font: 500 11.5px var(--mono); color: var(--ink-3); padding-top: 2px; }
+.enums { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--rule); }
+.enums h4 { margin: 0 0 6px; font-size: 13px; }
+.enums h4 code { font: 500 11.5px var(--mono); color: var(--ink-3); font-weight: 500; }
+.enums ul { margin: 0; padding: 0; list-style: none; font-size: 12.5px; color: var(--ink-2); display: grid; gap: 2px; }
+.enums li code { font: 500 11.5px var(--mono); color: var(--ink); margin-right: 6px; }
+footer.src { margin-top: 18px; font-size: 12.5px; color: var(--ink-3); }
+@media (max-width: 1100px) { section.more { grid-template-columns: 1fr; } }
+@media (max-width: 600px) { .wrap { padding: 20px 16px 48px; } .top h1 { font-size: 24px; } .controls { margin-left: 0; flex-wrap: wrap; } .rules li { grid-template-columns: 1fr; gap: 2px; } .enums { grid-template-columns: 1fr; } .flow .arr { width: 14px; } }
+@media print { .controls, .hint { display: none; } body { background: #fff; } .board, .panel { border-color: #ccc; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <a class="back" href="/">← Use &amp; Share</a>
+      <h1>Схема базы данных</h1>
+    </div>
+    <div class="controls">
+      <div class="seg" role="group" aria-label="Какие поля показывать">
+        <button type="button" data-mode="all" aria-pressed="true">Все поля</button>
+        <button type="button" data-mode="keys" aria-pressed="false">Только ключи</button>
+      </div>
+      <button type="button" class="btn" id="theme" aria-label="Сменить тему">Тёмная тема</button>
+    </div>
+  </header>
+
+  <div class="legend" aria-label="Легенда">
+    <span class="item"><span class="dot" style="background:var(--g-people)"></span><b>Люди</b></span>
+    <span class="item"><span class="dot" style="background:var(--g-catalog)"></span><b>Каталог</b></span>
+    <span class="item"><span class="dot" style="background:var(--g-deal)"></span><b>Договорённость</b></span>
+    <span class="item"><span class="dot" style="background:var(--g-money)"></span><b>Деньги</b></span>
+    <span class="item"><span class="key pk">PK</span> первичный ключ</span>
+    <span class="item"><span class="key fk">FK</span> ссылка на другую таблицу</span>
+    <span class="item"><span class="key uk">UK</span> уникальное значение</span>
+    <span class="item"><svg width="64" height="14" aria-hidden="true"><path d="M2 7H62" stroke="var(--line)" stroke-width="1.6"/><path d="M2 1L10 7L2 13M10 1V13" class="mk"/><path d="M56 1V13M60 1V13" class="mk"/></svg>много → один</span>
+    <span class="item"><svg width="44" height="14" aria-hidden="true"><path d="M2 7H42" stroke="var(--line-user)" stroke-width="1.6" stroke-dasharray="5 4"/></svg>ссылка на пользователя</span>
+  </div>
+
+  <div class="board" id="board">
+    <div class="canvas" id="canvas">
+      <svg class="links" id="links" aria-hidden="true"></svg>
+    </div>
+  </div>
+  <div class="zoombar"><div class="seg zoom" role="group" aria-label="Масштаб схемы">
+    <button type="button" data-zoom="fit" aria-pressed="true">Вписать в экран</button>
+    <button type="button" data-zoom="full" aria-pressed="false">Крупно</button>
+  </div></div>
+  <p class="hint">Вилка у поля-ссылки — «много», две черты у <code>id</code> — «один»: у одного пользователя много объявлений, у одной брони много платежей. Наведите на таблицу — подсветятся её связи и поля-ссылки.</p>
+
+  <section class="more one">
+    <div class="panel">
+      <h3>Как живёт сделка</h3>
+      <p>Поле <code>bookings.status</code>. Одна строка таблицы — одна сделка от запроса брони до возврата вещи.</p>
+      <div class="flow">
+        <div class="st"><b>Запрошена</b><code>requested</code></div><span class="arr"></span>
+        <div class="st lock"><b>Подтверждена</b><code>confirmed</code></div><span class="arr"></span>
+        <div class="st lock"><b>Оплачена</b><code>paid</code></div><span class="arr"></span>
+        <div class="st lock"><b>Вещь передана</b><code>handed_over</code></div><span class="arr"></span>
+        <div class="st end"><b>Завершена</b><code>completed</code></div>
+      </div>
+      <div class="branch">
+        <span>Из «Запрошена» владелец может</span><div class="st bad"><b>Отклонить</b><code>rejected</code></div>
+        <span>а до оплаты бронь можно</span><div class="st bad"><b>Отменить</b><code>cancelled</code></div>
+      </div>
+      <div class="note"><span class="sw"></span>В этих статусах период вещи занят: пересекающуюся бронь на ту же вещь база не даст создать.</div>
+      <p class="para">Деньги — в таблице «Платежи», отдельной строкой на каждую операцию: оплата аренды, удержание залога, возврат залога, выплата владельцу. На «Завершена» залог возвращается арендатору, а владелец получает оплату минус комиссия.</p>
+    </div>
+  </section>
+  <section class="stories" aria-labelledby="us-h">
+    <h2 id="us-h">Функциональность через user stories</h2>
+    <p class="stories-lead">Каждая история — что хочет человек и какие таблицы и поля это обеспечивают. «Показать на схеме» подсвечивает их на диаграмме выше.</p>
+    <div class="us-list" id="us-list"></div>
+    <p class="us-out">Не входят в эту версию: US-08 «отзывы и рейтинг» и автоскрытие объявлений по жалобам из US-10 — таблиц для них в схеме нет.</p>
+  </section>
+  <footer class="src">Источник — <a href="/schema.sql">schema.sql</a>. Требования FR-01…FR-11 — из SRS v1.3.</footer>
+</div>
+
+<script>
+const T = {
+  users: {g: '--g-people', main: true, ru: 'Пользователи', fr: 'FR-01 · FR-10', desc: 'Вход через Telegram. Один аккаунт — и арендатор, и владелец.', cols: [
+    ['id', 'PK', 'bigserial'], ['telegram_id', 'UK', 'bigint', 'вход'], ['telegram_username', '', 'text', 'виден после брони'], ['name', '', 'text'],
+    ['photo_url', '', 'text'], ['role', '', 'text', 'user / moderator'], ['is_blocked', '', 'boolean'], ['pdn_consent_at', '', 'timestamptz', 'согласие на ПДн'], ['created_at', '', 'timestamptz']]},
+  search_requests: {g: '--g-catalog', ru: 'Запросы «ищу»', fr: 'FR-03', desc: 'Вещи нет в каталоге — владельцам рядом приходит уведомление.', cols: [
+    ['id', 'PK', 'bigserial'], ['author_id', 'FK', 'bigint', 'кто ищет'], ['category', '', 'category'], ['description', '', 'text'],
+    ['starts_at · ends_at', '', 'timestamptz', 'когда нужна'], ['max_price', '', 'numeric', 'бюджет'], ['location', '', 'point'], ['created_at', '', 'timestamptz'], ['closed_at', '', 'timestamptz', 'запрос закрыт']]},
+  listings: {g: '--g-catalog', ru: 'Объявления', fr: 'FR-02 · 04 · 09', desc: 'Вещь, которую сдают: цена, залог, где находится.', cols: [
+    ['id', 'PK', 'bigserial'], ['owner_id', 'FK', 'bigint', 'владелец'], ['category', '', 'category'], ['title', '', 'text'], ['description', '', 'text'],
+    ['photos', '', 'text[]', '1–10 фото'], ['price_per_hour', '', 'numeric'], ['price_per_day', '', 'numeric'], ['deposit', '', 'numeric', 'залог'],
+    ['district · location', '', 'text · point', 'где'], ['status', '', 'listing_status'], ['promoted_until', '', 'timestamptz', 'продвижение'], ['created_at', '', 'timestamptz']]},
+  chats: {g: '--g-deal', ru: 'Чаты', fr: 'FR-03 · FR-05', desc: 'Ключ — пара «вещь + арендатор»: по одной вещи с одним человеком — один чат.', cols: [
+    ['renter_id', 'PK FK', 'bigint', 'арендатор'], ['listing_id', 'PK FK', 'bigint', 'о какой вещи'], ['created_at', '', 'timestamptz']]},
+  bookings: {g: '--g-deal', ru: 'Брони', fr: 'FR-06 · FR-07', desc: 'Бронь от запроса до возврата вещи.', cols: [
+    ['id', 'PK', 'bigserial'], ['renter_id', 'FK', 'bigint', 'арендатор'], ['listing_id', 'FK', 'bigint', 'что берут'], ['starts_at · ends_at', '', 'timestamptz', 'период'],
+    ['status', '', 'booking_status'], ['rent_amount', '', 'numeric', 'аренда'], ['commission_amount', '', 'numeric', '10 %'], ['deposit_amount', '', 'numeric', 'залог'],
+    ['handover_photos', '', 'text[]', 'фото передачи'], ['return_photos', '', 'text[]', 'фото возврата'], ['created_at · completed_at', '', 'timestamptz']]},
+  messages: {g: '--g-deal', ru: 'Сообщения', fr: 'FR-05', desc: 'Пишет одна из двух сторон чата.', cols: [
+    ['id', 'PK', 'bigserial'], ['renter_id', 'FK', 'bigint', 'чат: арендатор'], ['listing_id', 'FK', 'bigint', 'чат: вещь'], ['sender', '', 'party', 'renter / owner'], ['body', '', 'text'], ['created_at', '', 'timestamptz']]},
+  payments: {g: '--g-money', ru: 'Платежи', fr: 'FR-07 · NFR-02', desc: 'Оплата, залог и выплата владельцу — отдельными операциями.', cols: [
+    ['id', 'PK', 'bigserial'], ['booking_id', 'FK', 'bigint', 'за какую бронь'], ['kind', '', 'payment_kind', 'что за операция'], ['amount', '', 'numeric'],
+    ['status', '', 'payment_status'], ['provider_payment_id', 'UK', 'text', 'у провайдера'], ['idempotency_key', 'UK', 'uuid', 'без двойной оплаты'], ['created_at', '', 'timestamptz']]},
+};
+// Колонки слева направо — по ходу сделки
+const COLS = [['users', 'search_requests'], ['listings'], ['chats', 'bookings'], ['messages', 'payments']];
+const COL_X = [96, 536, 976, 1416], TOP = 72, GAP = 56;
+// Связи: от поля-ссылки к id. Подпись — роль.
+const L = [
+  {from: ['listings', 'owner_id'], to: 'users', label: 'владелец'},
+  {from: ['search_requests', 'author_id'], to: 'users', label: 'кто ищет'},
+  {from: ['chats', 'renter_id'], to: 'users', label: 'арендатор'},
+  {from: ['bookings', 'renter_id'], to: 'users', label: 'арендатор'},
+  {from: ['chats', 'listing_id'], to: 'listings', label: 'о какой вещи'},
+  {from: ['bookings', 'listing_id'], to: 'listings', label: 'что берут'},
+  {from: ['messages', ['renter_id', 'listing_id']], to: 'chats', toCols: ['renter_id', 'listing_id'], label: 'в каком чате'},
+  {from: ['payments', 'booking_id'], to: 'bookings', label: 'за какую бронь'},
+];
+
+const canvas = document.getElementById('canvas');
+const svg = document.getElementById('links');
+const board = document.getElementById('board');
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+const els = {};
+for (const [name, t] of Object.entries(T)) {
+  const el = document.createElement('article');
+  el.className = 't' + (t.main ? ' t-main' : '');
+  el.style.cssText = `--g:var(${t.g})`;
+  el.dataset.t = name;
+  const plain = t.cols.filter((c) => !c[1]).map((c) => c[0]);
+  el.innerHTML = `<div class="t-head"><div class="t-title"><h2>${esc(t.ru)}</h2><div class="t-sub"><code>${name}</code><span class="fr">${esc(t.fr)}</span></div></div><p class="t-desc">${esc(t.desc)}</p></div>
+    <ul class="rows">${t.cols.map(([c, k, type, note, ref]) => `<li class="r ${k ? 'key-row' : 'plain'}" data-c="${esc(c)}">${k ? `<span class="key ${k.split(' ')[0].toLowerCase()}">${k.replace(' ', '·')}</span>` : '<span></span>'}<span class="name">${esc(c)}${note ? `<i>${esc(note)}</i>` : ''}</span>${ref ? `<span class="ref">→ ${ref}</span>` : `<span class="type">${esc(type)}</span>`}</li>`).join('')}</ul>
+    <div class="hidden-rows">ещё ${plain.length}: ${esc(plain.join(', '))}</div>`;
+  canvas.appendChild(el);
+  els[name] = el;
+}
+
+function rowY(t, c) {
+  const row = els[t].querySelector(`[data-c="${CSS.escape(c)}"]`);
+  return els[t].offsetTop + row.offsetTop + row.offsetHeight / 2;
+}
+const L_ = (t) => els[t].offsetLeft, R_ = (t) => els[t].offsetLeft + els[t].offsetWidth;
+function draw() {
+  let h = 0;
+  for (const el of Object.values(els)) h = Math.max(h, el.offsetTop + el.offsetHeight);
+  canvas.style.height = h + 40 + 'px';
+  svg.setAttribute('width', canvas.offsetWidth);
+  svg.setAttribute('height', h + 40);
+  let out = `<defs>
+    <marker id="many" viewBox="0 0 16 16" refX="1" refY="8" markerWidth="16" markerHeight="16" orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path d="M15 1L1 8L15 15M1 8H15" class="mk"/></marker>
+    <marker id="one" viewBox="0 0 16 16" refX="15" refY="8" markerWidth="16" markerHeight="16" orient="auto" markerUnits="userSpaceOnUse"><path d="M6 1V15M10 1V15" class="mk"/></marker></defs>`;
+  for (const l of L) {
+    const [ft, fc] = l.from, tt = l.to;
+    // составной ключ: линия идёт от середины между его строками
+    const avg = (t, cs) => cs.reduce((a, c) => a + rowY(t, c), 0) / cs.length;
+    const y1 = avg(ft, [].concat(fc)), y2 = avg(tt, l.toCols ?? ['id']);
+    let d, lx, ly, anchor;
+    if (L_(ft) === L_(tt)) {
+      // таблицы в одной колонке: дуга слева (первая колонка) или справа
+      const left = L_(ft) < 300;
+      const x = left ? L_(ft) : R_(ft), bend = left ? -Math.min(84, 36 + Math.abs(y1 - y2) / 6) : Math.min(84, 36 + Math.abs(y1 - y2) / 6);
+      d = `M${x} ${y1} C${x + bend} ${y1} ${x + bend} ${y2} ${x} ${y2}`;
+      lx = x + (left ? -14 : 14); ly = y1 + 16; anchor = left ? 'end' : 'start';
+    } else {
+      // от поля-ссылки (слева у дочерней таблицы) к строке id (справа у главной)
+      const x1 = L_(ft), x2 = R_(tt), k = Math.max(60, (x1 - x2) * 0.5);
+      d = `M${x1} ${y1} C${x1 - k} ${y1} ${x2 + k} ${y2} ${x2} ${y2}`;
+      lx = x1 - 16; ly = y1 - 6; anchor = 'end';
+    }
+    out += `<path class="lnk${tt === 'users' ? ' user' : ''}" data-a="${ft}" data-b="${tt}" d="${d}" marker-start="url(#many)" marker-end="url(#one)"/>`;
+  }
+  svg.innerHTML = out;
+}
+
+function focus(name) {
+  board.classList.toggle('focus', !!name);
+  canvas.querySelectorAll('.on').forEach((e) => e.classList.remove('on'));
+  svg.querySelectorAll('.on').forEach((e) => e.classList.remove('on'));
+  if (!name) return;
+  els[name].classList.add('on');
+  for (const l of L) if (l.from[0] === name || l.to === name) {
+    for (const c of [].concat(l.from[1])) els[l.from[0]].querySelector(`[data-c="${c}"]`)?.classList.add('on');
+    for (const c of l.toCols ?? ['id']) els[l.to].querySelector(`[data-c="${c}"]`)?.classList.add('on');
+  }
+  svg.querySelectorAll(`[data-a="${name}"],[data-b="${name}"]`).forEach((e) => {
+    e.classList.add('on');
+    els[e.dataset.a].classList.add('on');
+    els[e.dataset.b].classList.add('on');
+  });
+}
+let pinned = null;
+for (const [n, el] of Object.entries(els)) {
+  el.addEventListener('mouseenter', () => !pinned && focus(n));
+  el.addEventListener('mouseleave', () => (pinned ? focusSet(pinned) : focus(null)));
+}
+// подсветка набора таблиц и полей из user story
+function focusSet(st) {
+  focus(null);
+  if (!st) return;
+  board.classList.add('focus');
+  for (const t of st.tables) els[t].classList.add('on');
+  for (const f of st.fields) {
+    const [t, c] = f.split('.');
+    els[t]?.querySelector(`[data-c="${CSS.escape(c)}"]`)?.classList.add('on');
+  }
+  svg.querySelectorAll('.lnk').forEach((e) => {
+    if (st.tables.includes(e.dataset.a) && st.tables.includes(e.dataset.b)) e.classList.add('on');
+  });
+}
+const GROUP = {users: '--g-people', listings: '--g-catalog', search_requests: '--g-catalog', chats: '--g-deal', bookings: '--g-deal', messages: '--g-deal', payments: '--g-money'};
+const US = [
+  {id: 'US-01', role: 'владелец', p: 'P0', title: 'Разместить вещь за пару минут, чтобы она начала приносить доход',
+   ac: 'Без категории, названия, фото, цены и залога объявление не публикуется.',
+   tables: ['users', 'listings'], fields: ['listings.owner_id', 'listings.photos', 'listings.price_per_hour', 'listings.price_per_day', 'listings.deposit', 'listings.status'],
+   db: ['Объявление — строка в <code>listings</code>, <code>owner_id</code> ссылается на владельца в <code>users</code>.',
+        'Проверки в самой таблице: <code>photos</code> от 1 до 10, хотя бы одна из цен <code>price_per_hour</code> / <code>price_per_day</code>, <code>deposit</code> не меньше 0.',
+        'Сразу после вставки <code>status = active</code> — объявление видно в поиске.']},
+  {id: 'US-02', role: 'арендатор', p: 'P0', title: 'Найти вещь рядом, свободную на нужный период, чтобы не покупать её ради пары дней',
+   ac: 'Занятые в этот период и дальше выбранного радиуса вещи в выдачу не попадают.',
+   tables: ['listings', 'bookings'], fields: ['listings.category', 'listings.district · location', 'listings.status', 'bookings.starts_at · ends_at', 'bookings.status', 'bookings.listing_id'],
+   db: ['Поиск идёт по <code>listings</code> со <code>status = active</code>: текст в <code>title</code>, фильтры по <code>category</code>, цене и расстоянию до <code>location</code>.',
+        'Свободна ли вещь — проверка по <code>bookings</code>: нет брони этой вещи в статусах <code>confirmed</code>, <code>paid</code>, <code>handed_over</code>, чей период пересекается с нужным.']},
+  {id: 'US-03', role: 'арендатор', p: 'P1', title: 'Оставить запрос «ищу», если вещи нет в каталоге, чтобы владельцы сами предложили',
+   ac: 'Без категории и периода запрос не публикуется; владельцы той же категории в 5 км получают уведомление.',
+   tables: ['users', 'search_requests', 'listings', 'chats', 'messages'], fields: ['search_requests.author_id', 'search_requests.category', 'search_requests.starts_at · ends_at', 'search_requests.closed_at', 'chats.listing_id', 'chats.renter_id'],
+   db: ['Запрос — строка в <code>search_requests</code>: автор, <code>category</code>, период (обязательны), бюджет, <code>location</code>.',
+        'Кого уведомить — владельцы <code>listings</code> той же категории в 5 км от <code>location</code> запроса.',
+        'Отклик: владелец отправляет своё объявление — создаётся строка <code>chats</code> (его вещь + автор запроса) и первое сообщение в <code>messages</code>.',
+        '<code>closed_at</code> заполняется, когда автор нашёл вещь или снял запрос — владельцы его больше не видят.']},
+  {id: 'US-04', role: 'арендатор', p: 'P0', title: 'Договориться с владельцем в чате, не раскрывая контакты, чтобы не получать звонки до сделки',
+   ac: 'До подтверждения брони телефоны и ники маскируются; после — виден Telegram-контакт.',
+   tables: ['users', 'listings', 'chats', 'messages', 'bookings'], fields: ['chats.listing_id', 'chats.renter_id', 'messages.renter_id', 'messages.listing_id', 'messages.sender', 'users.telegram_username'],
+   db: ['Ключ <code>chats</code> — пара «вещь + арендатор»: второго чата с тем же человеком о той же вещи быть не может.',
+        'Сообщения в <code>messages</code> ссылаются на чат этой парой, <code>sender</code> — сторона: <code>renter</code> или <code>owner</code>.',
+        'Текст хранится как есть и маскируется при показе, пока по этой паре в <code>bookings</code> нет подтверждённой брони; после неё показывается <code>users.telegram_username</code>.']},
+  {id: 'US-05', role: 'арендатор', p: 'P0', title: 'Забронировать вещь на нужный период — хоть на 3 часа, хоть на месяц, — чтобы её не отдали другому',
+   ac: 'Подтверждённый период блокируется: пересекающуюся бронь создать нельзя. Отклонённый запрос — в статусе «Отклонён».',
+   tables: ['users', 'listings', 'bookings'], fields: ['bookings.renter_id', 'bookings.listing_id', 'bookings.starts_at · ends_at', 'bookings.status', 'bookings.rent_amount', 'bookings.commission_amount'],
+   db: ['Запрос брони — строка <code>bookings</code> со <code>status = requested</code>, периодом и суммами: аренда и комиссия 10 % фиксируются в момент брони.',
+        'Владелец переводит её в <code>confirmed</code> или <code>rejected</code>.',
+        'Ограничение <code>EXCLUDE</code> в базе не даёт двум броням одной вещи в статусах <code>confirmed / paid / handed_over</code> пересекаться по времени.']},
+  {id: 'US-06', role: 'владелец', p: 'P0', title: 'Получить залог через сервис до передачи вещи, чтобы не бояться, что её не вернут',
+   ac: 'После оплаты сделка «Оплачена» и видно, что залог внесён; без оплаты кнопка «Вещь передана» недоступна.',
+   tables: ['bookings', 'payments'], fields: ['payments.booking_id', 'payments.kind', 'payments.status', 'bookings.status', 'bookings.deposit_amount', 'bookings.handover_photos'],
+   db: ['Залог — отдельная операция в <code>payments</code>: <code>kind = deposit_hold</code>, <code>status = succeeded</code>, сумма из <code>bookings.deposit_amount</code>.',
+        'Бронь переходит в <code>paid</code>; отметить передачу (<code>handed_over</code> и <code>handover_photos</code>) можно только из этого статуса.']},
+  {id: 'US-07', role: 'арендатор', p: 'P0', title: 'Платить через сервис и получить залог обратно после возврата, чтобы не зависеть от честности владельца',
+   ac: 'После подтверждения возврата сделка «Завершена», залог возвращается. Отказ банка — бронь остаётся «Подтверждена», можно повторить.',
+   tables: ['bookings', 'payments'], fields: ['payments.kind', 'payments.status', 'payments.idempotency_key', 'payments.provider_payment_id', 'bookings.return_photos', 'bookings.created_at · completed_at'],
+   db: ['Оплата аренды — строка <code>payments</code> с <code>kind = rent</code>; уникальный <code>idempotency_key</code> не даёт двойному клику списать деньги дважды.',
+        'Если банк отказал — платёж <code>failed</code>, а бронь остаётся в <code>confirmed</code>.',
+        'Возврат: <code>return_photos</code>, статус <code>completed</code>, <code>completed_at</code>, и ещё две операции — <code>deposit_release</code> арендатору и <code>payout</code> владельцу.']},
+  {id: 'US-09', role: 'владелец', p: 'P2', title: 'Оплатить продвижение объявления, чтобы его чаще видели',
+   ac: 'Продвигаемое объявление — в топ-3 категории с меткой; через 7 дней возвращается в обычную сортировку.',
+   tables: ['listings'], fields: ['listings.promoted_until'],
+   db: ['В <code>listings.promoted_until</code> пишется «сейчас + 7 дней»; пока срок не прошёл, объявление поднимается в топ-3 своей категории.',
+        'Сам платёж 149 ₽ в схеме не хранится: <code>payments</code> привязаны к броням.']},
+  {id: 'US-10', role: 'модератор', p: 'P1', title: 'Скрывать мошеннические объявления и блокировать нарушителей, чтобы на площадке были честные сделки',
+   ac: 'Заблокированный пользователь не может войти.',
+   tables: ['users', 'listings'], fields: ['users.role', 'users.is_blocked', 'listings.status'],
+   db: ['Модератор — пользователь с <code>role = moderator</code>.',
+        'Скрыть объявление — <code>listings.status = hidden</code>: из поиска оно пропадает.',
+        'Заблокировать — <code>users.is_blocked = true</code>: такой пользователь не может войти и совершать сделки.']},
+];
+const usList = document.getElementById('us-list');
+usList.innerHTML = US.map((u, i) => `<article class="us" data-i="${i}">
+  <div class="us-l">
+    <div class="us-id">${u.id}<span>${u.role}</span>${u.p}</div>
+    <h3>${esc(u.title)}</h3>
+    <p>${esc(u.ac)}</p>
+    <button type="button" class="btn" data-show="${i}">Показать на схеме</button>
+  </div>
+  <div class="us-r">
+    <div class="us-t">${u.tables.map((t) => `<span style="--g:var(${GROUP[t]})">${t}</span>`).join('')}</div>
+    <ul>${u.db.map((x) => `<li>${x}</li>`).join('')}</ul>
+  </div>
+</article>`).join('');
+usList.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-show]');
+  if (!b) return;
+  const st = US[+b.dataset.show];
+  const same = pinned === st;
+  pinned = same ? null : st;
+  document.querySelectorAll('.us').forEach((x) => x.classList.toggle('on', !same && x === b.closest('.us')));
+  document.querySelectorAll('[data-show]').forEach((x) => (x.textContent = 'Показать на схеме'));
+  if (!same) b.textContent = 'Снять подсветку';
+  focusSet(pinned);
+  if (!same) board.scrollIntoView({behavior: 'smooth', block: 'start'});
+});
+addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && pinned) {
+    pinned = null;
+    document.querySelectorAll('.us').forEach((x) => x.classList.remove('on'));
+    document.querySelectorAll('[data-show]').forEach((x) => (x.textContent = 'Показать на схеме'));
+    focusSet(null);
+  }
+});
+
+document.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener('click', () => {
+  const keys = b.dataset.mode === 'keys';
+  document.body.classList.toggle('keys-only', keys);
+  document.querySelectorAll('[data-mode]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+  layout();
+}));
+// В режиме «Только ключи» карточки короче — подтягиваем нижние, чтобы не было пустот
+function layout() {
+  const place = (n, x, y) => { els[n].style.left = x + 'px'; els[n].style.top = y + 'px'; };
+  const bottom = (n) => els[n].offsetTop + els[n].offsetHeight;
+  COLS.forEach((col, i) => col.forEach((n) => (els[n].style.left = COL_X[i] + 'px')));
+  // колонки 1 и 3: друг под другом
+  place('users', COL_X[0], TOP); place('search_requests', COL_X[0], bottom('users') + GAP);
+  place('chats', COL_X[2], TOP); place('bookings', COL_X[2], bottom('chats') + GAP);
+  // объявления опускаем ниже строк «арендатор», чтобы линии к пользователям шли над ними
+  // и ниже строки id запросов «ищу», чтобы линия «отклик на запрос» не шла через карточку
+  place('listings', COL_X[1], Math.max(rowY('bookings', 'renter_id') + 44, rowY('search_requests', 'id') + 48));
+  place('messages', COL_X[3], TOP); place('payments', COL_X[3], Math.max(els.bookings.offsetTop, bottom('messages') + GAP));
+  draw();
+  fit();
+}
+
+// На узком экране схема целиком не помещается: уменьшаем её, чтобы связи были видны все сразу
+let zoomMode = 'fit';
+function fit() {
+  canvas.style.transform = '';
+  board.style.height = '';
+  const avail = board.clientWidth, w = canvas.offsetWidth;
+  const canFit = avail < w;
+  board.classList.toggle('can-fit', canFit);
+  const on = canFit && zoomMode === 'fit';
+  board.classList.toggle('fit', on);
+  if (on) {
+    const k = avail / w;
+    canvas.style.transform = `scale(${k})`;
+    board.style.height = Math.ceil(canvas.offsetHeight * k) + 2 + 'px';
+  }
+}
+document.querySelectorAll('[data-zoom]').forEach((b) => b.addEventListener('click', () => {
+  zoomMode = b.dataset.zoom;
+  document.querySelectorAll('[data-zoom]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+  fit();
+}));
+addEventListener('resize', fit);
+
+const root = document.documentElement;
+const themeBtn = document.getElementById('theme');
+const dark = () => root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+const syncTheme = () => { themeBtn.textContent = dark() ? 'Светлая тема' : 'Тёмная тема'; };
+themeBtn.addEventListener('click', () => { root.dataset.theme = dark() ? 'light' : 'dark'; syncTheme(); });
+syncTheme();
+document.fonts.ready.then(layout);
+layout();
+</script>
+</body>
+</html>
