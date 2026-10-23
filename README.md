@@ -6,7 +6,7 @@
 ## Посмотреть
 
 - Сайт (демо): https://useshare.157-22-181-235.sslip.io
-- ER-диаграмма и user stories: https://useshare.157-22-181-235.sslip.io/erd.html
+- ER-диаграмма (схема БД): https://useshare.157-22-181-235.sslip.io/erd.html
 
 ## Что здесь
 
@@ -14,7 +14,7 @@
 |---|---|
 | `site/` | Фронтенд (демо без сервера): React 19 + TypeScript, React Router, Vite. Данные синтетические, хранятся в `localStorage`. |
 | `schema.sql` | Схема базы данных MVP, PostgreSQL 16 (7 таблиц). |
-| `erd.html` | ER-диаграмма и описание функциональности через user stories — открывается в браузере. |
+| `erd.html` | ER-диаграмма: таблицы схемы БД и связи между ними — открывается в браузере. |
 | `docs/` | OnePager, PRD, SRS, User Stories, RTM. |
 
 ## Запуск сайта

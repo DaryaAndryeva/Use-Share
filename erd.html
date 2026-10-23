@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Схема БД — Use & Share</title>
-<meta name="description" content="ER-диаграмма базы данных Use & Share: 7 таблиц, связи, статусы сделки и правила целостности">
+<meta name="description" content="ER-диаграмма базы данных Use & Share: 7 таблиц и связи между ними">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -40,7 +40,6 @@ a { color: var(--g-catalog); }
 .wrap { max-width: 1440px; margin: 0 auto; padding: 32px 32px 64px; }
 header.top { display: flex; align-items: flex-end; gap: 24px; flex-wrap: wrap; margin-bottom: 20px; }
 .top h1 { margin: 0; font-size: 30px; line-height: 1.15; font-weight: 800; letter-spacing: -.01em; }
-.top p { margin: 6px 0 0; color: var(--ink-2); max-width: 720px; }
 .top .back { display: inline-flex; gap: 6px; align-items: center; font-weight: 600; font-size: 13px; text-decoration: none; margin-bottom: 10px; }
 .controls { margin-left: auto; display: flex; gap: 8px; align-items: center; }
 .seg { display: inline-flex; background: var(--card); border: 1px solid var(--rule); border-radius: 10px; padding: 3px; }
@@ -109,65 +108,9 @@ body.keys-only .hidden-rows { display: block; padding: 2px 12px 8px 46px; font-s
 .board.focus .lbl { opacity: .15; }
 .board.focus .lbl.on { opacity: 1; fill: var(--ink); }
 .mk { fill: none; stroke: var(--line); stroke-width: 1.6; }
-.hint { margin: 10px 2px 0; font-size: 12.5px; color: var(--ink-3); }
 
-section.more { display: grid; align-items: start; grid-template-columns: 1.35fr 1fr; gap: 16px; margin-top: 16px; }
-.panel { background: var(--card); border: 1px solid var(--rule); border-radius: 16px; padding: 20px 22px; }
-.panel h3 { margin: 0 0 4px; font-size: 18px; font-weight: 800; }
-.panel > p { margin: 0 0 16px; color: var(--ink-2); font-size: 13px; }
-.flow { display: flex; align-items: center; gap: 0; flex-wrap: wrap; row-gap: 12px; }
-.st { border: 1.5px solid var(--g-deal); border-radius: 10px; padding: 8px 10px; min-width: 112px; }
-.st b { display: block; font-size: 13px; }
-.st code { font: 500 11px var(--mono); color: var(--ink-3); }
-.st.lock { background: color-mix(in srgb, var(--g-deal) 14%, transparent); }
-.st.end { border-color: var(--g-catalog); }
-.st.bad { border-color: var(--ink-3); border-style: dashed; }
-.arr { width: 26px; height: 2px; background: var(--line); position: relative; flex: none; }
-.arr::after { content: ""; position: absolute; right: -1px; top: -4px; border: 5px solid transparent; border-left: 7px solid var(--line); border-right: 0; }
-.branch { margin-top: 14px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-size: 12.5px; color: var(--ink-2); }
-.note { margin-top: 14px; font-size: 12.5px; color: var(--ink-2); display: flex; gap: 8px; align-items: center; }
-.sw { width: 14px; height: 14px; border-radius: 4px; border: 1.5px solid var(--g-deal); background: color-mix(in srgb, var(--g-deal) 14%, transparent); flex: none; }
-.para { margin: 14px 0 0; font-size: 12.5px; color: var(--ink-2); }
-.para code, .note code, .panel > p code, .hint code { font: 500 11.5px var(--mono); }
-.changes { margin-top: 16px; }
-.changes ul { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 8px; font-size: 13px; color: var(--ink-2); }
-.changes b { color: var(--ink); }
-.changes p { margin: 12px 0 0; font-size: 12.5px; color: var(--ink-3); }
-.top p b { color: var(--ink); font-weight: 700; }
-.top p code { font: 500 12.5px var(--mono); }
-.more.one { grid-template-columns: 1fr; }
-.stories { margin-top: 40px; }
-.stories > h2 { font-size: 28px; font-weight: 800; letter-spacing: -.02em; }
-.stories-lead { color: var(--ink-2); margin: 8px 0 20px; max-width: 70ch; }
-.us-list { display: grid; gap: 12px; }
-.us { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 0; background: var(--card); border: 1px solid var(--rule); border-radius: 14px; overflow: hidden; }
-.us.on { border-color: var(--ink); box-shadow: 0 0 0 2px var(--ink); }
-.us-l { padding: 18px 20px; display: grid; gap: 8px; align-content: start; border-right: 1px solid var(--rule); }
-.us-id { display: flex; align-items: center; gap: 8px; font: 600 12px var(--mono); color: var(--ink-3); }
-.us-id span { padding: 2px 8px; border-radius: 10px; background: var(--rule-2); color: var(--ink-2); font-family: var(--sans); font-weight: 700; }
-.us-l h3 { margin: 0; font-size: 17px; line-height: 1.3; }
-.us-l p { margin: 0; font-size: 14px; color: var(--ink-2); }
-.us-l button { justify-self: start; margin-top: 4px; }
-.us-r { padding: 18px 20px; display: grid; gap: 10px; align-content: start; }
-.us-t { display: flex; flex-wrap: wrap; gap: 6px; }
-.us-t span { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 13px; font: 600 12px var(--mono); background: color-mix(in srgb, var(--g) 12%, transparent); color: var(--ink); }
-.us-t span::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--g); }
-.us-r ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 14px; color: var(--ink-2); }
-.us-r code { font: 500 12px var(--mono); color: var(--ink); background: var(--rule-2); padding: 1px 5px; border-radius: 4px; }
-.us-out { margin-top: 14px; font-size: 13px; color: var(--ink-3); }
-@media (max-width: 860px) { .us { grid-template-columns: 1fr; } .us-l { border-right: 0; border-bottom: 1px solid var(--rule); } }
-.rules { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
-.rules li { display: grid; grid-template-columns: 116px 1fr; gap: 10px; font-size: 13px; }
-.rules code { font: 500 11.5px var(--mono); color: var(--ink-3); padding-top: 2px; }
-.enums { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--rule); }
-.enums h4 { margin: 0 0 6px; font-size: 13px; }
-.enums h4 code { font: 500 11.5px var(--mono); color: var(--ink-3); font-weight: 500; }
-.enums ul { margin: 0; padding: 0; list-style: none; font-size: 12.5px; color: var(--ink-2); display: grid; gap: 2px; }
-.enums li code { font: 500 11.5px var(--mono); color: var(--ink); margin-right: 6px; }
-footer.src { margin-top: 18px; font-size: 12.5px; color: var(--ink-3); }
-@media (max-width: 1100px) { section.more { grid-template-columns: 1fr; } }
-@media (max-width: 600px) { .wrap { padding: 20px 16px 48px; } .top h1 { font-size: 24px; } .controls { margin-left: 0; flex-wrap: wrap; } .rules li { grid-template-columns: 1fr; gap: 2px; } .enums { grid-template-columns: 1fr; } .flow .arr { width: 14px; } }
-@media print { .controls, .hint { display: none; } body { background: #fff; } .board, .panel { border-color: #ccc; } }
+@media (max-width: 600px) { .wrap { padding: 20px 16px 48px; } .top h1 { font-size: 24px; } .controls { margin-left: 0; flex-wrap: wrap; } }
+@media print { .controls { display: none; } body { background: #fff; } .board { border-color: #ccc; } }
 </style>
 </head>
 <body>
@@ -207,34 +150,7 @@ footer.src { margin-top: 18px; font-size: 12.5px; color: var(--ink-3); }
     <button type="button" data-zoom="fit" aria-pressed="true">Вписать в экран</button>
     <button type="button" data-zoom="full" aria-pressed="false">Крупно</button>
   </div></div>
-  <p class="hint">Вилка у поля-ссылки — «много», две черты у <code>id</code> — «один»: у одного пользователя много объявлений, у одной брони много платежей. Наведите на таблицу — подсветятся её связи и поля-ссылки.</p>
 
-  <section class="more one">
-    <div class="panel">
-      <h3>Как живёт сделка</h3>
-      <p>Поле <code>bookings.status</code>. Одна строка таблицы — одна сделка от запроса брони до возврата вещи.</p>
-      <div class="flow">
-        <div class="st"><b>Запрошена</b><code>requested</code></div><span class="arr"></span>
-        <div class="st lock"><b>Подтверждена</b><code>confirmed</code></div><span class="arr"></span>
-        <div class="st lock"><b>Оплачена</b><code>paid</code></div><span class="arr"></span>
-        <div class="st lock"><b>Вещь передана</b><code>handed_over</code></div><span class="arr"></span>
-        <div class="st end"><b>Завершена</b><code>completed</code></div>
-      </div>
-      <div class="branch">
-        <span>Из «Запрошена» владелец может</span><div class="st bad"><b>Отклонить</b><code>rejected</code></div>
-        <span>а до оплаты бронь можно</span><div class="st bad"><b>Отменить</b><code>cancelled</code></div>
-      </div>
-      <div class="note"><span class="sw"></span>В этих статусах период вещи занят: пересекающуюся бронь на ту же вещь база не даст создать.</div>
-      <p class="para">Деньги — в таблице «Платежи», отдельной строкой на каждую операцию: оплата аренды, удержание залога, возврат залога, выплата владельцу. На «Завершена» залог возвращается арендатору, а владелец получает оплату минус комиссия.</p>
-    </div>
-  </section>
-  <section class="stories" aria-labelledby="us-h">
-    <h2 id="us-h">Функциональность через user stories</h2>
-    <p class="stories-lead">Каждая история — что хочет человек и какие таблицы и поля это обеспечивают. «Показать на схеме» подсвечивает их на диаграмме выше.</p>
-    <div class="us-list" id="us-list"></div>
-    <p class="us-out">Не входят в эту версию: US-08 «отзывы и рейтинг» и автоскрытие объявлений по жалобам из US-10 — таблиц для них в схеме нет.</p>
-  </section>
-  <footer class="src">Источник — <a href="/schema.sql">schema.sql</a>. Требования FR-01…FR-11 — из SRS v1.3.</footer>
 </div>
 
 <script>
@@ -347,113 +263,10 @@ function focus(name) {
     els[e.dataset.b].classList.add('on');
   });
 }
-let pinned = null;
 for (const [n, el] of Object.entries(els)) {
-  el.addEventListener('mouseenter', () => !pinned && focus(n));
-  el.addEventListener('mouseleave', () => (pinned ? focusSet(pinned) : focus(null)));
+  el.addEventListener('mouseenter', () => focus(n));
+  el.addEventListener('mouseleave', () => focus(null));
 }
-// подсветка набора таблиц и полей из user story
-function focusSet(st) {
-  focus(null);
-  if (!st) return;
-  board.classList.add('focus');
-  for (const t of st.tables) els[t].classList.add('on');
-  for (const f of st.fields) {
-    const [t, c] = f.split('.');
-    els[t]?.querySelector(`[data-c="${CSS.escape(c)}"]`)?.classList.add('on');
-  }
-  svg.querySelectorAll('.lnk').forEach((e) => {
-    if (st.tables.includes(e.dataset.a) && st.tables.includes(e.dataset.b)) e.classList.add('on');
-  });
-}
-const GROUP = {users: '--g-people', listings: '--g-catalog', search_requests: '--g-catalog', chats: '--g-deal', bookings: '--g-deal', messages: '--g-deal', payments: '--g-money'};
-const US = [
-  {id: 'US-01', role: 'владелец', p: 'P0', title: 'Разместить вещь за пару минут, чтобы она начала приносить доход',
-   ac: 'Без категории, названия, фото, цены и залога объявление не публикуется.',
-   tables: ['users', 'listings'], fields: ['listings.owner_id', 'listings.photos', 'listings.price_per_hour', 'listings.price_per_day', 'listings.deposit', 'listings.status'],
-   db: ['Объявление — строка в <code>listings</code>, <code>owner_id</code> ссылается на владельца в <code>users</code>.',
-        'Проверки в самой таблице: <code>photos</code> от 1 до 10, хотя бы одна из цен <code>price_per_hour</code> / <code>price_per_day</code>, <code>deposit</code> не меньше 0.',
-        'Сразу после вставки <code>status = active</code> — объявление видно в поиске.']},
-  {id: 'US-02', role: 'арендатор', p: 'P0', title: 'Найти вещь рядом, свободную на нужный период, чтобы не покупать её ради пары дней',
-   ac: 'Занятые в этот период и дальше выбранного радиуса вещи в выдачу не попадают.',
-   tables: ['listings', 'bookings'], fields: ['listings.category', 'listings.district · location', 'listings.status', 'bookings.starts_at · ends_at', 'bookings.status', 'bookings.listing_id'],
-   db: ['Поиск идёт по <code>listings</code> со <code>status = active</code>: текст в <code>title</code>, фильтры по <code>category</code>, цене и расстоянию до <code>location</code>.',
-        'Свободна ли вещь — проверка по <code>bookings</code>: нет брони этой вещи в статусах <code>confirmed</code>, <code>paid</code>, <code>handed_over</code>, чей период пересекается с нужным.']},
-  {id: 'US-03', role: 'арендатор', p: 'P1', title: 'Оставить запрос «ищу», если вещи нет в каталоге, чтобы владельцы сами предложили',
-   ac: 'Без категории и периода запрос не публикуется; владельцы той же категории в 5 км получают уведомление.',
-   tables: ['users', 'search_requests', 'listings', 'chats', 'messages'], fields: ['search_requests.author_id', 'search_requests.category', 'search_requests.starts_at · ends_at', 'search_requests.closed_at', 'chats.listing_id', 'chats.renter_id'],
-   db: ['Запрос — строка в <code>search_requests</code>: автор, <code>category</code>, период (обязательны), бюджет, <code>location</code>.',
-        'Кого уведомить — владельцы <code>listings</code> той же категории в 5 км от <code>location</code> запроса.',
-        'Отклик: владелец отправляет своё объявление — создаётся строка <code>chats</code> (его вещь + автор запроса) и первое сообщение в <code>messages</code>.',
-        '<code>closed_at</code> заполняется, когда автор нашёл вещь или снял запрос — владельцы его больше не видят.']},
-  {id: 'US-04', role: 'арендатор', p: 'P0', title: 'Договориться с владельцем в чате, не раскрывая контакты, чтобы не получать звонки до сделки',
-   ac: 'До подтверждения брони телефоны и ники маскируются; после — виден Telegram-контакт.',
-   tables: ['users', 'listings', 'chats', 'messages', 'bookings'], fields: ['chats.listing_id', 'chats.renter_id', 'messages.renter_id', 'messages.listing_id', 'messages.sender', 'users.telegram_username'],
-   db: ['Ключ <code>chats</code> — пара «вещь + арендатор»: второго чата с тем же человеком о той же вещи быть не может.',
-        'Сообщения в <code>messages</code> ссылаются на чат этой парой, <code>sender</code> — сторона: <code>renter</code> или <code>owner</code>.',
-        'Текст хранится как есть и маскируется при показе, пока по этой паре в <code>bookings</code> нет подтверждённой брони; после неё показывается <code>users.telegram_username</code>.']},
-  {id: 'US-05', role: 'арендатор', p: 'P0', title: 'Забронировать вещь на нужный период — хоть на 3 часа, хоть на месяц, — чтобы её не отдали другому',
-   ac: 'Подтверждённый период блокируется: пересекающуюся бронь создать нельзя. Отклонённый запрос — в статусе «Отклонён».',
-   tables: ['users', 'listings', 'bookings'], fields: ['bookings.renter_id', 'bookings.listing_id', 'bookings.starts_at · ends_at', 'bookings.status', 'bookings.rent_amount', 'bookings.commission_amount'],
-   db: ['Запрос брони — строка <code>bookings</code> со <code>status = requested</code>, периодом и суммами: аренда и комиссия 10 % фиксируются в момент брони.',
-        'Владелец переводит её в <code>confirmed</code> или <code>rejected</code>.',
-        'Ограничение <code>EXCLUDE</code> в базе не даёт двум броням одной вещи в статусах <code>confirmed / paid / handed_over</code> пересекаться по времени.']},
-  {id: 'US-06', role: 'владелец', p: 'P0', title: 'Получить залог через сервис до передачи вещи, чтобы не бояться, что её не вернут',
-   ac: 'После оплаты сделка «Оплачена» и видно, что залог внесён; без оплаты кнопка «Вещь передана» недоступна.',
-   tables: ['bookings', 'payments'], fields: ['payments.booking_id', 'payments.kind', 'payments.status', 'bookings.status', 'bookings.deposit_amount', 'bookings.handover_photos'],
-   db: ['Залог — отдельная операция в <code>payments</code>: <code>kind = deposit_hold</code>, <code>status = succeeded</code>, сумма из <code>bookings.deposit_amount</code>.',
-        'Бронь переходит в <code>paid</code>; отметить передачу (<code>handed_over</code> и <code>handover_photos</code>) можно только из этого статуса.']},
-  {id: 'US-07', role: 'арендатор', p: 'P0', title: 'Платить через сервис и получить залог обратно после возврата, чтобы не зависеть от честности владельца',
-   ac: 'После подтверждения возврата сделка «Завершена», залог возвращается. Отказ банка — бронь остаётся «Подтверждена», можно повторить.',
-   tables: ['bookings', 'payments'], fields: ['payments.kind', 'payments.status', 'payments.idempotency_key', 'payments.provider_payment_id', 'bookings.return_photos', 'bookings.created_at · completed_at'],
-   db: ['Оплата аренды — строка <code>payments</code> с <code>kind = rent</code>; уникальный <code>idempotency_key</code> не даёт двойному клику списать деньги дважды.',
-        'Если банк отказал — платёж <code>failed</code>, а бронь остаётся в <code>confirmed</code>.',
-        'Возврат: <code>return_photos</code>, статус <code>completed</code>, <code>completed_at</code>, и ещё две операции — <code>deposit_release</code> арендатору и <code>payout</code> владельцу.']},
-  {id: 'US-09', role: 'владелец', p: 'P2', title: 'Оплатить продвижение объявления, чтобы его чаще видели',
-   ac: 'Продвигаемое объявление — в топ-3 категории с меткой; через 7 дней возвращается в обычную сортировку.',
-   tables: ['listings'], fields: ['listings.promoted_until'],
-   db: ['В <code>listings.promoted_until</code> пишется «сейчас + 7 дней»; пока срок не прошёл, объявление поднимается в топ-3 своей категории.',
-        'Сам платёж 149 ₽ в схеме не хранится: <code>payments</code> привязаны к броням.']},
-  {id: 'US-10', role: 'модератор', p: 'P1', title: 'Скрывать мошеннические объявления и блокировать нарушителей, чтобы на площадке были честные сделки',
-   ac: 'Заблокированный пользователь не может войти.',
-   tables: ['users', 'listings'], fields: ['users.role', 'users.is_blocked', 'listings.status'],
-   db: ['Модератор — пользователь с <code>role = moderator</code>.',
-        'Скрыть объявление — <code>listings.status = hidden</code>: из поиска оно пропадает.',
-        'Заблокировать — <code>users.is_blocked = true</code>: такой пользователь не может войти и совершать сделки.']},
-];
-const usList = document.getElementById('us-list');
-usList.innerHTML = US.map((u, i) => `<article class="us" data-i="${i}">
-  <div class="us-l">
-    <div class="us-id">${u.id}<span>${u.role}</span>${u.p}</div>
-    <h3>${esc(u.title)}</h3>
-    <p>${esc(u.ac)}</p>
-    <button type="button" class="btn" data-show="${i}">Показать на схеме</button>
-  </div>
-  <div class="us-r">
-    <div class="us-t">${u.tables.map((t) => `<span style="--g:var(${GROUP[t]})">${t}</span>`).join('')}</div>
-    <ul>${u.db.map((x) => `<li>${x}</li>`).join('')}</ul>
-  </div>
-</article>`).join('');
-usList.addEventListener('click', (e) => {
-  const b = e.target.closest('[data-show]');
-  if (!b) return;
-  const st = US[+b.dataset.show];
-  const same = pinned === st;
-  pinned = same ? null : st;
-  document.querySelectorAll('.us').forEach((x) => x.classList.toggle('on', !same && x === b.closest('.us')));
-  document.querySelectorAll('[data-show]').forEach((x) => (x.textContent = 'Показать на схеме'));
-  if (!same) b.textContent = 'Снять подсветку';
-  focusSet(pinned);
-  if (!same) board.scrollIntoView({behavior: 'smooth', block: 'start'});
-});
-addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && pinned) {
-    pinned = null;
-    document.querySelectorAll('.us').forEach((x) => x.classList.remove('on'));
-    document.querySelectorAll('[data-show]').forEach((x) => (x.textContent = 'Показать на схеме'));
-    focusSet(null);
-  }
-});
 
 document.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener('click', () => {
   const keys = b.dataset.mode === 'keys';
