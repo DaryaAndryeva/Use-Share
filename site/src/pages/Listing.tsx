@@ -64,8 +64,8 @@ export function ListingPage() {
   };
   const chat = () => {
     if (!s.me) return nav('/login', {state: {back: `/listing/${l.id}`}});
-    const c = act(() => s.openChat(l.id));
-    if (c) nav(`/chats/${c.listingId}/${c.renterId}`);
+    const id = act(() => s.openChat(l.id));
+    if (id) nav(`/chats/${id}`);
   };
   const cta = !valid ? 'Укажите даты' : past ? 'Начало уже прошло' : !free ? 'Эти даты заняты' : 'Запросить аренду';
 

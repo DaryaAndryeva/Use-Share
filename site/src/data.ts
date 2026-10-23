@@ -1,4 +1,4 @@
-// Демо-данные и модель по schema.sql v2. Сервера нет: всё хранится в браузере.
+// Демо-данные и модель по schema.sql v3. Сервера нет: всё хранится в браузере.
 
 export type CategorySlug = 'tools' | 'tourism' | 'photo' | 'kids' | 'sport' | 'party' | 'kitchen';
 export type BookingStatus = 'requested' | 'rejected' | 'cancelled' | 'confirmed' | 'paid' | 'handed_over' | 'completed';
@@ -15,8 +15,10 @@ export interface Listing {
   priceHour: number | null; priceDay: number | null; deposit: number; districtId: number; lat: number; lng: number;
   photos: number; status: 'active' | 'hidden' | 'archived'; promotedUntil: number | null; createdAt: number;
 }
-export interface Chat { listingId: number; renterId: number; createdAt: number }
-export interface Message { id: number; listingId: number; renterId: number; sender: Party; body: string; createdAt: number }
+// Чат — один на пару «вещь + арендатор»; если в нём был отклик на запрос «ищу», помним, на какой
+export interface Chat { id: number; listingId: number; renterId: number; searchRequestId: number | null; createdAt: number }
+// Читает всегда другая сторона, поэтому отметка о прочтении одна; clientMsgId — защита от дублей при повторной отправке
+export interface Message { id: number; chatId: number; sender: Party; body: string; clientMsgId: string; createdAt: number; readAt: number | null }
 export interface Booking {
   id: number; renterId: number; listingId: number; startsAt: number; endsAt: number; status: BookingStatus;
   rentAmount: number; commissionAmount: number; depositAmount: number; handoverPhotos: number; returnPhotos: number;
@@ -31,7 +33,7 @@ export interface SearchRequest {
   maxPrice: number | null; districtId: number; lat: number; lng: number; createdAt: number; closedAt: number | null;
 }
 export interface DB {
-  version: 2; users: User[]; listings: Listing[]; chats: Chat[]; messages: Message[]; bookings: Booking[];
+  version: 3; users: User[]; listings: Listing[]; chats: Chat[]; messages: Message[]; bookings: Booking[];
   payments: Payment[]; requests: SearchRequest[]; seq: Record<string, number>;
 }
 
@@ -125,10 +127,17 @@ export function seed(now: number): DB {
   });
   listings[5].promotedUntil = now + 5 * DAY; // SUP продвигается
   const chats: Chat[] = [], messages: Message[] = [], bookings: Booking[] = [], payments: Payment[] = [];
-  const msg = (listingId: number, renterId: number, sender: Party, body: string, createdAt: number) =>
-    messages.push({id: next('messages'), listingId, renterId, sender, body, createdAt});
+  // readAt: история прочитана; null — другая сторона ещё не открывала чат
+  const msg = (chatId: number, sender: Party, body: string, createdAt: number, readAt: number | null = createdAt + 5 * 60e3) => {
+    const id = next('messages');
+    messages.push({id, chatId, sender, body, clientMsgId: `seed-${id}`, createdAt, readAt});
+  };
   const chat = (listingId: number, renterId: number, createdAt: number) => {
-    if (!chats.some((c) => c.listingId === listingId && c.renterId === renterId)) chats.push({listingId, renterId, createdAt});
+    const c = chats.find((x) => x.listingId === listingId && x.renterId === renterId);
+    if (c) return c.id;
+    const id = next('chats');
+    chats.push({id, listingId, renterId, searchRequestId: null, createdAt});
+    return id;
   };
   const pay = (bookingId: number, kind: PaymentKind, amount: number, createdAt: number) =>
     payments.push({id: next('payments'), bookingId, kind, amount, status: 'succeeded', providerPaymentId: `sbx_${100000 + (seq.payments ?? 0) + 1}`, idempotencyKey: `seed-${bookingId}-${kind}`, createdAt});
@@ -161,9 +170,9 @@ export function seed(now: number): DB {
       const renterId = renters.filter((u) => u !== l.ownerId)[Math.floor(r() * 8)];
       const start = at(now, -Math.floor(6 + r() * 100), 10);
       const days = 1 + Math.floor(r() * 3);
-      chat(l.id, renterId, start - 2 * DAY);
-      msg(l.id, renterId, 'renter', `Здравствуйте! Можно взять «${l.title}» на ${days} ${days === 1 ? 'день' : 'дня'}?`, start - 2 * DAY);
-      msg(l.id, renterId, 'owner', 'Да, свободно. Оформляйте бронь.', start - 2 * DAY + 10 * 60e3);
+      const cid = chat(l.id, renterId, start - 2 * DAY);
+      msg(cid, 'renter', `Здравствуйте! Можно взять «${l.title}» на ${days} ${days === 1 ? 'день' : 'дня'}?`, start - 2 * DAY);
+      msg(cid, 'owner', 'Да, свободно. Оформляйте бронь.', start - 2 * DAY + 10 * 60e3);
       book(l, renterId, start, start + days * DAY, 'completed', start - 2 * DAY + HOUR);
     }
   }
@@ -180,9 +189,9 @@ export function seed(now: number): DB {
   ];
   for (const [lid, renterId, day, hour, hours, ago, status] of live) {
     const l = L(lid), start = at(now, day, hour);
-    chat(l.id, renterId, now - (ago + 1) * DAY);
-    msg(l.id, renterId, 'renter', `Добрый день! «${l.title}» свободна ${new Date(start).toLocaleDateString('ru-RU', {day: 'numeric', month: 'long'})}? Мой телефон +7 916 123-45-67`, now - (ago + 1) * DAY);
-    msg(l.id, renterId, 'owner', 'Здравствуйте, да. Встретимся у метро, удобно?', now - (ago + 1) * DAY + 25 * 60e3);
+    const cid = chat(l.id, renterId, now - (ago + 1) * DAY);
+    msg(cid, 'renter', `Добрый день! «${l.title}» свободна ${new Date(start).toLocaleDateString('ru-RU', {day: 'numeric', month: 'long'})}? Мой телефон +7 916 123-45-67`, now - (ago + 1) * DAY);
+    msg(cid, 'owner', 'Здравствуйте, да. Встретимся у метро, удобно?', now - (ago + 1) * DAY + 25 * 60e3, null); // арендатор ещё не прочитал
     book(l, renterId, start, start + hours * HOUR, status, now - ago * DAY - 3 * HOUR);
   }
   const requests: SearchRequest[] = [
@@ -198,7 +207,7 @@ export function seed(now: number): DB {
       districtId: d.id, lat: d.lat, lng: d.lng, createdAt: now - DAY, closedAt: null,
     };
   });
-  return {version: 2, users, listings, chats, messages, bookings, payments, requests, seq};
+  return {version: 3, users, listings, chats, messages, bookings, payments, requests, seq};
 }
 
 // ── геометрия «линии пути» ──

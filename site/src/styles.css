@@ -359,6 +359,7 @@ input[type="datetime-local"].input, input[type="date"].input { font-variant-nume
 .chatrow b { font-size: 15px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .chatrow small { display: block; font-size: 13px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .chatrow .who { font-size: 12px; font-weight: 650; color: var(--ink-2); }
+.chatrow .count { display: inline-block; margin-left: 8px; vertical-align: 1px; }
 .thread { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-width: 0; }
 .thread-h { display: flex; gap: 14px; align-items: center; padding: 12px 18px; border-bottom: 1px solid var(--rule); }
 .thread-h .plate { width: 44px; height: 44px; }

@@ -19,9 +19,9 @@ export function Requests() {
     .sort((a, b) => s.distanceTo(a) - s.distanceTo(b));
   const mineListings = s.me ? s.db.listings.filter((l) => l.ownerId === s.me!.id && l.status === 'active') : [];
   const offer = (r: SearchRequest, listingId: number) => {
-    const c = act(() => s.offer(r.id, listingId), 'Предложение отправлено в чат');
+    const id = act(() => s.offer(r.id, listingId), 'Предложение отправлено в чат');
     setOfferFor(null);
-    if (c) nav(`/chats/${c.listingId}/${c.renterId}`);
+    if (id) nav(`/chats/${id}`);
   };
   return (
     <>

@@ -1,4 +1,4 @@
--- Use & Share — схема БД MVP (PostgreSQL 16), версия 2.
+-- Use & Share — схема БД MVP (PostgreSQL 16), версия 3.
 -- Одна таблица — одно понятие: пользователь, вещь, чат, бронь, платёж.
 -- Данные карт не хранятся: их вводят в форме платёжного провайдера (NFR-03).
 
@@ -58,27 +58,33 @@ CREATE TABLE search_requests (
     CHECK (ends_at > starts_at)
 );
 
--- Чат по объявлению (FR-05): один диалог на пару «вещь + арендатор».
--- Отклик на запрос «ищу» — владелец отправляет автору запроса своё готовое объявление:
--- открывается обычный чат по этой вещи, первым сообщением — карточка объявления.
--- Ключ чата составной: вещь + арендатор. Второго чата по той же вещи с тем же человеком быть не может.
+-- Чат по объявлению (FR-05): один диалог на пару «вещь + арендатор», сколько бы броней по ней ни было.
+-- Владелец не хранится — он берётся из listings.owner_id.
+-- Отклик на запрос «ищу» (FR-03) — владелец пишет автору запроса в такой же чат по своей вещи
+-- (новый или уже существующий); ссылка на запрос остаётся, чтобы считать, сколько откликов принесли запросы (M-2).
 CREATE TABLE chats (
-    renter_id   bigint       NOT NULL REFERENCES users (id),
-    listing_id  bigint       NOT NULL REFERENCES listings (id),
-    created_at  timestamptz  NOT NULL DEFAULT now(),
-    PRIMARY KEY (listing_id, renter_id)
+    id                 bigserial    PRIMARY KEY,
+    listing_id         bigint       NOT NULL REFERENCES listings (id),
+    renter_id          bigint       NOT NULL REFERENCES users (id),
+    search_request_id  bigint       REFERENCES search_requests (id),   -- запрос «ищу», на который был отклик в этом чате
+    created_at         timestamptz  NOT NULL DEFAULT now(),
+    UNIQUE (listing_id, renter_id)                    -- второго чата по той же вещи с тем же человеком быть не может
 );
+CREATE INDEX chats_renter_idx ON chats (renter_id);   -- «мои чаты» арендатора; для владельца — через listings.owner_id
 
--- Сообщения: отправитель — одна из двух сторон чата
+-- Сообщения: пишет одна из двух сторон чата, читает всегда другая — поэтому отметка о прочтении одна.
+-- Клиент получает новые сообщения опросом «WHERE chat_id = ? AND id > последний виденный».
 CREATE TABLE messages (
-    id          bigserial    PRIMARY KEY,
-    renter_id   bigint       NOT NULL,               -- чат = (listing_id, renter_id)
-    listing_id  bigint       NOT NULL,
-    sender      party        NOT NULL,
-    body        text         NOT NULL,               -- контакты маскируются при показе до брони
-    created_at  timestamptz  NOT NULL DEFAULT now(),
-    FOREIGN KEY (listing_id, renter_id) REFERENCES chats (listing_id, renter_id)
+    id             bigserial    PRIMARY KEY,
+    chat_id        bigint       NOT NULL REFERENCES chats (id),
+    sender         party        NOT NULL,                       -- renter / owner
+    body           text         NOT NULL CHECK (length(body) BETWEEN 1 AND 2000),  -- контакты маскируются при показе до брони
+    client_msg_id  uuid         NOT NULL DEFAULT gen_random_uuid(),  -- повторная отправка по плохой сети не создаёт дубль
+    created_at     timestamptz  NOT NULL DEFAULT now(),
+    read_at        timestamptz,                                 -- когда прочитала другая сторона
+    UNIQUE (chat_id, client_msg_id)
 );
+CREATE INDEX messages_chat_idx ON messages (chat_id, id);     -- история чата и выборка «что нового после id N»
 
 -- Бронь (FR-06): от запроса до возврата вещи
 CREATE TABLE bookings (

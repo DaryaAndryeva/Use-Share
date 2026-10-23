@@ -108,7 +108,7 @@ export function Cabinet() {
         {requests.length ? (
           <div className="rows">
             {requests.map((r) => {
-              const offers = s.db.messages.filter((m) => m.renterId === me && m.sender === 'owner' && m.body.includes(`«${r.description}»`)).length;
+              const offers = s.db.chats.filter((c) => c.searchRequestId === r.id).length;
               return (
                 <div key={r.id} className="row" data-line={r.category}>
                   <span className="plate plate-m"><Picto name={r.category} size={30} /></span>

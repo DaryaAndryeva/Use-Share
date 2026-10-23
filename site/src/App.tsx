@@ -13,23 +13,16 @@ import {Login} from './pages/Login';
 import {NewListing} from './pages/NewListing';
 import {NewRequest, Requests} from './pages/Requests';
 import {Profile} from './pages/Profile';
-import {StoreProvider, ownerOfListing, useStore} from './store';
+import {StoreProvider, myChats, ownerOfListing, unreadIn, useStore} from './store';
 import {ToastHost} from './ui';
 
-/** Сколько дел ждёт меня: запросы брони на мои вещи и последние сообщения не от меня. */
+/** Сколько дел ждёт меня: запросы брони на мои вещи и диалоги с непрочитанными сообщениями. */
 export function useInbox() {
   const s = useStore();
   if (!s.me) return {bookings: 0, chats: 0};
   const me = s.me.id;
   const bookings = s.db.bookings.filter((b) => b.status === 'requested' && ownerOfListing(s.db, b.listingId) === me).length;
-  let chats = 0;
-  for (const c of s.db.chats) {
-    const owner = ownerOfListing(s.db, c.listingId);
-    if (c.renterId !== me && owner !== me) continue;
-    const msgs = s.db.messages.filter((m) => m.listingId === c.listingId && m.renterId === c.renterId);
-    const last = msgs[msgs.length - 1];
-    if (last && (last.sender === 'renter' ? c.renterId : owner) !== me && s.now - last.createdAt < 2 * 864e5) chats++;
-  }
+  const chats = myChats(s.db, me).filter((c) => unreadIn(s.db, c, me) > 0).length;
   return {bookings, chats};
 }
 
@@ -165,7 +158,7 @@ function Shell() {
           <Route path="/requests" element={<Requests />} />
           <Route path="/request/new" element={<NewRequest />} />
           <Route path="/chats" element={<Chats />} />
-          <Route path="/chats/:listingId/:renterId" element={<Chats />} />
+          <Route path="/chats/:chatId" element={<Chats />} />
           <Route path="/deal/:id" element={<Deal />} />
           <Route path="/me" element={<Navigate to="/me/overview" replace />} />
           <Route path="/me/:tab" element={<Cabinet />} />

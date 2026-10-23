@@ -136,7 +136,7 @@ body.keys-only .hidden-rows { display: block; padding: 2px 12px 8px 46px; font-s
     <span class="item"><span class="dot" style="background:var(--g-money)"></span><b>Деньги</b></span>
     <span class="item"><span class="key pk">PK</span> первичный ключ</span>
     <span class="item"><span class="key fk">FK</span> ссылка на другую таблицу</span>
-    <span class="item"><span class="key uk">UK</span> уникальное значение</span>
+    <span class="item"><span class="key uk">UK</span> уникальное значение (или пара)</span>
     <span class="item"><svg width="64" height="14" aria-hidden="true"><path d="M2 7H62" stroke="var(--line)" stroke-width="1.6"/><path d="M2 1L10 7L2 13M10 1V13" class="mk"/><path d="M56 1V13M60 1V13" class="mk"/></svg>много → один</span>
     <span class="item"><svg width="44" height="14" aria-hidden="true"><path d="M2 7H42" stroke="var(--line-user)" stroke-width="1.6" stroke-dasharray="5 4"/></svg>ссылка на пользователя</span>
   </div>
@@ -165,14 +165,16 @@ const T = {
     ['id', 'PK', 'bigserial'], ['owner_id', 'FK', 'bigint', 'владелец'], ['category', '', 'category'], ['title', '', 'text'], ['description', '', 'text'],
     ['photos', '', 'text[]', '1–10 фото'], ['price_per_hour', '', 'numeric'], ['price_per_day', '', 'numeric'], ['deposit', '', 'numeric', 'залог'],
     ['district · location', '', 'text · point', 'где'], ['status', '', 'listing_status'], ['promoted_until', '', 'timestamptz', 'продвижение'], ['created_at', '', 'timestamptz']]},
-  chats: {g: '--g-deal', ru: 'Чаты', fr: 'FR-03 · FR-05', desc: 'Ключ — пара «вещь + арендатор»: по одной вещи с одним человеком — один чат.', cols: [
-    ['renter_id', 'PK FK', 'bigint', 'арендатор'], ['listing_id', 'PK FK', 'bigint', 'о какой вещи'], ['created_at', '', 'timestamptz']]},
+  chats: {g: '--g-deal', ru: 'Чаты', fr: 'FR-03 · FR-05', desc: 'Один чат на пару «вещь + арендатор» — пара уникальна. Владелец берётся из объявления.', cols: [
+    ['id', 'PK', 'bigserial'], ['listing_id', 'FK UK', 'bigint', 'о какой вещи'], ['renter_id', 'FK UK', 'bigint', 'арендатор'],
+    ['search_request_id', 'FK', 'bigint', 'отклик на «ищу»'], ['created_at', '', 'timestamptz']]},
   bookings: {g: '--g-deal', ru: 'Брони', fr: 'FR-06 · FR-07', desc: 'Бронь от запроса до возврата вещи.', cols: [
     ['id', 'PK', 'bigserial'], ['renter_id', 'FK', 'bigint', 'арендатор'], ['listing_id', 'FK', 'bigint', 'что берут'], ['starts_at · ends_at', '', 'timestamptz', 'период'],
     ['status', '', 'booking_status'], ['rent_amount', '', 'numeric', 'аренда'], ['commission_amount', '', 'numeric', '10 %'], ['deposit_amount', '', 'numeric', 'залог'],
     ['handover_photos', '', 'text[]', 'фото передачи'], ['return_photos', '', 'text[]', 'фото возврата'], ['created_at · completed_at', '', 'timestamptz']]},
-  messages: {g: '--g-deal', ru: 'Сообщения', fr: 'FR-05', desc: 'Пишет одна из двух сторон чата.', cols: [
-    ['id', 'PK', 'bigserial'], ['renter_id', 'FK', 'bigint', 'чат: арендатор'], ['listing_id', 'FK', 'bigint', 'чат: вещь'], ['sender', '', 'party', 'renter / owner'], ['body', '', 'text'], ['created_at', '', 'timestamptz']]},
+  messages: {g: '--g-deal', ru: 'Сообщения', fr: 'FR-05', desc: 'Пишет одна из двух сторон чата, читает другая — отметка о прочтении одна.', cols: [
+    ['id', 'PK', 'bigserial'], ['chat_id', 'FK', 'bigint', 'в каком чате'], ['sender', '', 'party', 'renter / owner'], ['body', '', 'text', 'до 2000 знаков'],
+    ['client_msg_id', 'UK', 'uuid', 'защита от дублей'], ['created_at', '', 'timestamptz'], ['read_at', '', 'timestamptz', 'прочитано']]},
   payments: {g: '--g-money', ru: 'Платежи', fr: 'FR-07 · NFR-02', desc: 'Оплата, залог и выплата владельцу — отдельными операциями.', cols: [
     ['id', 'PK', 'bigserial'], ['booking_id', 'FK', 'bigint', 'за какую бронь'], ['kind', '', 'payment_kind', 'что за операция'], ['amount', '', 'numeric'],
     ['status', '', 'payment_status'], ['provider_payment_id', 'UK', 'text', 'у провайдера'], ['idempotency_key', 'UK', 'uuid', 'без двойной оплаты'], ['created_at', '', 'timestamptz']]},
@@ -187,8 +189,9 @@ const L = [
   {from: ['chats', 'renter_id'], to: 'users', label: 'арендатор'},
   {from: ['bookings', 'renter_id'], to: 'users', label: 'арендатор'},
   {from: ['chats', 'listing_id'], to: 'listings', label: 'о какой вещи'},
+  {from: ['chats', 'search_request_id'], to: 'search_requests', label: 'отклик на запрос'},
   {from: ['bookings', 'listing_id'], to: 'listings', label: 'что берут'},
-  {from: ['messages', ['renter_id', 'listing_id']], to: 'chats', toCols: ['renter_id', 'listing_id'], label: 'в каком чате'},
+  {from: ['messages', 'chat_id'], to: 'chats', label: 'в каком чате'},
   {from: ['payments', 'booking_id'], to: 'bookings', label: 'за какую бронь'},
 ];
 

@@ -1,11 +1,14 @@
 // Состояние демо: база в localStorage, текущий пользователь, «часы» с перемоткой для проверки сделок.
 import * as React from 'react';
 import {
-  BLOCKING, type Booking, type CategorySlug, COMMISSION, type DB, DAY, type Listing, type Party, PROMO_DAYS, type SearchRequest,
-  type User, district, metersBetween, priceFor, seed,
+  BLOCKING, type Booking, type CategorySlug, type Chat, COMMISSION, type DB, DAY, type Listing, type Message, type Party, PROMO_DAYS,
+  type SearchRequest, type User, district, metersBetween, priceFor, seed,
 } from './data';
 
-const KEY = 'useshare-v2';
+const KEY = 'useshare-v3';
+const MAX_MESSAGE = 2000;
+// id сообщения на стороне клиента: повторная отправка того же текста по плохой сети не создаёт дубль
+const uuid = () => (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`);
 type Persist = {db: DB; me: number | null; shift: number; base: number};
 
 function load(): Persist {
@@ -13,7 +16,7 @@ function load(): Persist {
     const raw = localStorage.getItem(KEY);
     if (raw) {
       const p = JSON.parse(raw) as Persist;
-      if (p.db?.version === 2) return p;
+      if (p.db?.version === 3) return p;
     }
   } catch {
     /* приватный режим — начинаем с чистых данных */
@@ -36,9 +39,10 @@ export interface Store {
   promote(id: number): void;
   createRequest(r: Omit<SearchRequest, 'id' | 'authorId' | 'createdAt' | 'closedAt' | 'lat' | 'lng'>): number;
   closeRequest(id: number): void;
-  offer(requestId: number, listingId: number): {listingId: number; renterId: number};
-  openChat(listingId: number): {listingId: number; renterId: number};
-  send(listingId: number, renterId: number, body: string): void;
+  offer(requestId: number, listingId: number): number;
+  openChat(listingId: number): number;
+  send(chatId: number, body: string): void;
+  markRead(chatId: number): void;
   requestBooking(listingId: number, startsAt: number, endsAt: number): number;
   decide(bookingId: number, ok: boolean): void;
   cancel(bookingId: number): void;
@@ -91,6 +95,17 @@ export function StoreProvider({children}: {children: React.ReactNode}) {
       return b;
     };
     const ownerOf = (d: DB, b: Booking) => d.listings.find((l) => l.id === b.listingId)!.ownerId;
+    // чат по паре «вещь + арендатор» — один; id известен до записи, чтобы вернуть его вызывающему
+    const chatIdFor = (d: DB, listingId: number, renterId: number) => d.chats.find((c) => c.listingId === listingId && c.renterId === renterId)?.id;
+    const ensureChat = (d: DB, listingId: number, renterId: number, searchRequestId: number | null = null) => {
+      const found = chatIdFor(d, listingId, renterId);
+      if (found) return found;
+      const id = next(d, 'chats');
+      d.chats.push({id, listingId, renterId, searchRequestId, createdAt: now});
+      return id;
+    };
+    const newMessage = (d: DB, chatId: number, sender: Party, body: string): Message =>
+      ({id: next(d, 'messages'), chatId, sender, body, clientMsgId: uuid(), createdAt: now, readAt: null});
     const here = () => {
       const d = district(me?.districtId ?? 1);
       return {lat: d.lat, lng: d.lng, name: d.name};
@@ -159,31 +174,46 @@ export function StoreProvider({children}: {children: React.ReactNode}) {
         const l = db.listings.find((x) => x.id === listingId)!;
         if (l.ownerId !== u.id) throw new ActionError('Предложить можно только своё объявление');
         if (r.authorId === u.id) throw new ActionError('Это ваш собственный запрос');
+        const id = chatIdFor(db, listingId, r.authorId) ?? (db.seq.chats ?? 0) + 1;
         mutate((d) => {
-          if (!d.chats.some((c) => c.listingId === listingId && c.renterId === r.authorId)) d.chats.push({listingId, renterId: r.authorId, createdAt: now});
-          d.messages.push({id: next(d, 'messages'), listingId, renterId: r.authorId, sender: 'owner', createdAt: now,
-            body: `Видел ваш запрос «${r.description}». У меня есть «${l.title}» — подойдёт?`});
+          const cid = ensureChat(d, listingId, r.authorId, r.id);
+          const c = d.chats.find((x) => x.id === cid)!;
+          if (c.searchRequestId === null) c.searchRequestId = r.id; // отклик в уже существующий чат по этой вещи
+          d.messages.push(newMessage(d, cid, 'owner', `Видел ваш запрос «${r.description}». У меня есть «${l.title}» — подойдёт?`));
         });
-        return {listingId, renterId: r.authorId};
+        return id;
       },
       openChat(listingId) {
         const u = need();
         const l = db.listings.find((x) => x.id === listingId)!;
         if (l.ownerId === u.id) throw new ActionError('Это ваше объявление');
+        const id = chatIdFor(db, listingId, u.id) ?? (db.seq.chats ?? 0) + 1;
         mutate((d) => {
-          if (!d.chats.some((c) => c.listingId === listingId && c.renterId === u.id)) d.chats.push({listingId, renterId: u.id, createdAt: now});
+          ensureChat(d, listingId, u.id);
         });
-        return {listingId, renterId: u.id};
+        return id;
       },
-      send(listingId, renterId, body) {
+      send(chatId, body) {
         const u = need();
         const text = body.trim();
         if (!text) return;
-        const owner = db.listings.find((x) => x.id === listingId)!.ownerId;
-        const sender: Party = u.id === renterId ? 'renter' : 'owner';
-        if (u.id !== renterId && u.id !== owner) throw new ActionError('Вы не участник этого чата');
+        if (text.length > MAX_MESSAGE) throw new ActionError(`Сообщение длиннее ${MAX_MESSAGE} знаков`);
+        const c = db.chats.find((x) => x.id === chatId);
+        if (!c) throw new ActionError('Чат не найден');
+        const sender = chatParty(db, c, u.id);
+        if (!sender) throw new ActionError('Вы не участник этого чата');
         mutate((d) => {
-          d.messages.push({id: next(d, 'messages'), listingId, renterId, sender, body: text, createdAt: now});
+          d.messages.push(newMessage(d, chatId, sender, text));
+        });
+      },
+      markRead(chatId) {
+        if (!me) return;
+        const c = db.chats.find((x) => x.id === chatId);
+        if (!c) return;
+        const mine = chatParty(db, c, me.id);
+        if (!mine || !unreadIn(db, c, me.id)) return;
+        mutate((d) => {
+          for (const m of d.messages) if (m.chatId === chatId && m.sender !== mine && m.readAt === null) m.readAt = now;
         });
       },
       requestBooking(listingId, a, b) {
@@ -199,7 +229,7 @@ export function StoreProvider({children}: {children: React.ReactNode}) {
           next(d, 'bookings');
           d.bookings.push({id, renterId: u.id, listingId, startsAt: a, endsAt: b, status: 'requested', rentAmount: pr.rent,
             commissionAmount: Math.round(pr.rent * COMMISSION), depositAmount: l.deposit, handoverPhotos: 0, returnPhotos: 0, createdAt: now, completedAt: null});
-          if (!d.chats.some((c) => c.listingId === listingId && c.renterId === u.id)) d.chats.push({listingId, renterId: u.id, createdAt: now});
+          ensureChat(d, listingId, u.id);
         });
         return id;
       },
@@ -279,5 +309,13 @@ export const isPromoted = (l: Listing, now: number) => !!l.promotedUntil && l.pr
 export function busyNow(db: DB, listingId: number, now: number) {
   return db.bookings.find((b) => b.listingId === listingId && ['paid', 'handed_over'].includes(b.status) && b.startsAt <= now && now < b.endsAt);
 }
-export const chatKey = (listingId: number, renterId: number) => `${listingId}-${renterId}`;
+// моя сторона в чате: арендатор, владелец вещи или никто
+export const chatParty = (db: DB, c: Chat, userId: number): Party | null =>
+  c.renterId === userId ? 'renter' : ownerOfListing(db, c.listingId) === userId ? 'owner' : null;
+export const myChats = (db: DB, userId: number) => db.chats.filter((c) => chatParty(db, c, userId) !== null);
+// непрочитанные мной: написала другая сторона, readAt ещё пуст
+export function unreadIn(db: DB, c: Chat, userId: number) {
+  const mine = chatParty(db, c, userId);
+  return mine ? db.messages.filter((m) => m.chatId === c.id && m.sender !== mine && m.readAt === null).length : 0;
+}
 export type CategoryFilter = CategorySlug | 'all';

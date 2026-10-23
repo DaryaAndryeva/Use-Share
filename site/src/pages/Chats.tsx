@@ -3,7 +3,7 @@ import * as React from 'react';
 import {Link, useNavigate, useParams} from 'react-router-dom';
 import {Plate} from '../art';
 import {BLOCKING, dayShort, maskContacts, timeLabel} from '../data';
-import {ownerOfListing, useStore} from '../store';
+import {myChats, unreadIn, useStore} from '../store';
 import {nextAction, statusFor, useAct} from '../ui';
 import {NeedLogin} from './NewListing';
 
@@ -14,18 +14,23 @@ export function Chats() {
   const p = useParams();
   const [text, setText] = React.useState('');
   const box = React.useRef<HTMLDivElement>(null);
-  const cur = p.listingId ? {listingId: Number(p.listingId), renterId: Number(p.renterId)} : null;
-  const msgs = cur ? s.db.messages.filter((m) => m.listingId === cur.listingId && m.renterId === cur.renterId) : [];
+  const chatId = p.chatId ? Number(p.chatId) : null;
+  const cur = chatId ? s.db.chats.find((c) => c.id === chatId) ?? null : null;
+  const msgs = cur ? s.db.messages.filter((m) => m.chatId === cur.id) : [];
   React.useEffect(() => {
     box.current?.scrollTo({top: box.current.scrollHeight});
-  }, [msgs.length, p.listingId, p.renterId]);
+  }, [msgs.length, chatId]);
+  // открытый диалог считается прочитанным
+  const unreadHere = cur && s.me ? unreadIn(s.db, cur, s.me.id) : 0;
+  React.useEffect(() => {
+    if (cur && unreadHere) s.markRead(cur.id);
+  }, [cur?.id, unreadHere]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!s.me) return <NeedLogin what="переписываться" />;
   const me = s.me.id;
-  const mine = s.db.chats
-    .filter((c) => c.renterId === me || ownerOfListing(s.db, c.listingId) === me)
+  const mine = myChats(s.db, me)
     .map((c) => {
-      const m = s.db.messages.filter((x) => x.listingId === c.listingId && x.renterId === c.renterId);
-      return {...c, last: m[m.length - 1], at: m.length ? m[m.length - 1].createdAt : c.createdAt};
+      const m = s.db.messages.filter((x) => x.chatId === c.id);
+      return {...c, last: m[m.length - 1], at: m.length ? m[m.length - 1].createdAt : c.createdAt, unread: unreadIn(s.db, c, me)};
     })
     .sort((a, b) => b.at - a.at);
 
@@ -46,12 +51,12 @@ export function Chats() {
           const cl = s.listing(c.listingId)!;
           const amRenter = c.renterId === me;
           const who = s.user(amRenter ? cl.ownerId : c.renterId);
-          const here = cur?.listingId === c.listingId && cur?.renterId === c.renterId;
+          const here = cur?.id === c.id;
           return (
-            <Link key={`${c.listingId}-${c.renterId}`} to={`/chats/${c.listingId}/${c.renterId}`} className="chatrow" aria-current={here ? 'page' : undefined}>
+            <Link key={c.id} to={`/chats/${c.id}`} className="chatrow" aria-current={here ? 'page' : undefined}>
               <span className="chatplate"><Plate art={cl.art} cat={cl.category} size="m" />{here ? <i className="here-dot" aria-hidden="true" /> : null}</span>
               <span style={{minWidth: 0}}>
-                <span className="who">{who.name} · {amRenter ? 'владелец' : 'хочет взять'}</span>
+                <span className="who">{who.name} · {amRenter ? 'владелец' : 'хочет взять'}{c.unread ? <span className="count" aria-label={`${c.unread} непрочитанных`}>{c.unread}</span> : null}</span>
                 <b>{cl.title}</b>
                 <small>{c.last ? `${(c.last.sender === 'renter') === amRenter ? 'Вы: ' : ''}${unlockedFor(s, c.listingId, c.renterId) ? c.last.body : maskContacts(c.last.body)}` : 'Нет сообщений'}</small>
               </span>
@@ -103,7 +108,7 @@ export function Chats() {
             <form className="compose" onSubmit={(e) => {
               e.preventDefault();
               if (!text.trim()) return;
-              act(() => s.send(l.id, cur.renterId, text));
+              act(() => s.send(cur.id, text));
               setText('');
             }}>
               <input className="input" value={text} onChange={(e) => setText(e.target.value)} placeholder="Сообщение" aria-label="Сообщение" />
